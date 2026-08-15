@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fallieri's Studio · Barbería en Chivilcoy · Reservá tu turno online</title>
+<meta name="description" content="Barbería en Chivilcoy. Corte, color, barba y diseño. Cinco barberos con agenda propia: reservá tu turno online en menos de un minuto. Showroom de ropa en el local.">
+<meta name="theme-color" content="#0B0B0C">
+<link rel="canonical" href="https://tu-dominio.com.ar/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Fallieri's Studio · Reservá tu turno online">
+<meta property="og:description" content="Cinco barberos, agenda propia y turno online sin mandar un MD. Almafuerte 585, Chivilcoy.">
+<meta property="og:image" content="https://tu-dominio.com.ar/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230B0B0C'/%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23F2F0EB' stroke-width='1.2'/%3E%3Ctext x='16' y='22' font-size='16' font-family='Georgia,serif' fill='%23F2F0EB' text-anchor='middle'%3EF%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilos.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HairSalon",
+  "name": "Fallieri's Studio",
+  "description": "Barbería en Chivilcoy con cinco barberos y showroom de ropa propia.",
+  "address": { "@type": "PostalAddress", "streetAddress": "Almafuerte 585", "addressLocality": "Chivilcoy", "postalCode": "6620", "addressRegion": "Buenos Aires", "addressCountry": "AR" },
+  "sameAs": ["https://instagram.com/fallieristudio", "https://instagram.com/fallierishowroom"],
+  "priceRange": "$$",
+  "url": "https://tu-dominio.com.ar/"
+}
+</script>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<nav class="nav" id="nav">
+  <div class="contenedor">
+    <!-- Isotipo reducido: a 38px el wordmark completo no se leería -->
+    <a href="#" class="logo" aria-label="Fallieri's Studio">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <text x="50" y="67" text-anchor="middle" fill="currentColor" font-family="'Instrument Serif',Georgia,serif" font-size="50">F</text>
+      </svg>
+      <span class="marca">FALLIERI&#39;S <small>STUDIO</small></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#servicios">Servicios</a>
+      <a href="#equipo">Equipo</a>
+      <a href="#showroom">Showroom</a>
+      <a href="#local">El local</a>
+      <a class="btn btn--chico" href="reservar.html">Reservar turno</a>
+    </div>
+    <button class="nav-burger" id="burger" aria-label="Abrir menú">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="contenedor">
+    <span class="etiqueta">Chivilcoy · Buenos Aires</span>
+    <h1>Corte, color<br>y <em>oficio</em>.</h1>
+    <div class="hero-pie">
+      <p>Cinco barberos, cinco agendas. Elegís con quién, qué servicio y a qué hora. Sin mandar un MD y quedarte esperando la respuesta.</p>
+      <div class="hero-datos">
+        <a href="reservar.html" class="enlace-flecha">Reservar turno <span>→</span></a>
+        <div class="etiqueta" style="margin-top:14px" id="horarioTexto">Martes a sábado · 10–13 / 15–20</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= CINTA ================= -->
+<div class="cinta" aria-hidden="true">
+  <div class="cinta-pista">
+    <span>Fade</span><span>·</span><span>Color</span><span>·</span><span>Diseño freestyle</span><span>·</span>
+    <span>Barba con navaja</span><span>·</span><span>Showroom</span><span>·</span>
+    <span>Fade</span><span>·</span><span>Color</span><span>·</span><span>Diseño freestyle</span><span>·</span>
+    <span>Barba con navaja</span><span>·</span><span>Showroom</span><span>·</span>
+  </div>
+</div>
+
+<!-- ================= SERVICIOS ================= -->
+<section class="seccion seccion--claro" id="servicios">
+  <div class="contenedor">
+    <div class="encabezado-seccion">
+      <div>
+        <span class="etiqueta">01 — La carta</span>
+        <h2>Servicios</h2>
+      </div>
+      <p>Cada barbero tiene su especialidad. Al reservar vas a ver solo lo que hace el que elegiste, con su precio.</p>
+    </div>
+    <div class="lista-servicios" id="listaServicios">
+      <!-- Contenido inicial (se refresca desde la base de datos) -->
+      <article class="servicio"><h3>Corte</h3><div class="precio">$ 16.000</div><p>Corte a máquina y tijera, lavado y peinado.</p><div class="duracion">30 min</div></article>
+      <article class="servicio"><h3>Corte y barba</h3><div class="precio">$ 18.000</div><p>El combo completo. Perfilado con navaja.</p><div class="duracion">60 min</div></article>
+      <article class="servicio"><h3>Barba</h3><div class="precio">$ 9.000</div><p>Perfilado, navaja y toalla caliente.</p><div class="duracion">30 min</div></article>
+      <article class="servicio"><h3>Diseño / freestyle</h3><div class="precio">$ 20.000</div><p>Líneas y dibujos a mano alzada sobre el corte.</p><div class="duracion">45 min</div></article>
+    </div>
+    <div style="margin-top:44px">
+      <a href="reservar.html" class="btn btn--oscuro">Sacar turno ahora</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EQUIPO ================= -->
+<section class="seccion" id="equipo">
+  <div class="contenedor">
+    <div class="encabezado-seccion">
+      <div>
+        <span class="etiqueta">02 — El equipo</span>
+        <h2>Los que cortan</h2>
+      </div>
+      <p>Cinco manos distintas. Elegí la tuya y reservá directo en su agenda.</p>
+    </div>
+    <div class="grilla-equipo" id="grillaEquipo">
+      <div class="barbero-card"><div class="barbero-foto"><b>VF</b></div><h3>Valentín Fallieri</h3><p class="bio">Fades, color y diseño.</p><div class="pie"><a href="reservar.html">Reservar →</a></div></div>
+      <div class="barbero-card"><div class="barbero-foto"><b>IF</b></div><h3>Ina Fallieri</h3><p class="bio">Color y estilismo.</p><div class="pie"><a href="reservar.html">Reservar →</a></div></div>
+      <div class="barbero-card"><div class="barbero-foto"><b>AF</b></div><h3>Ale Fusto</h3><p class="bio">Corte clásico y barba.</p><div class="pie"><a href="reservar.html">Reservar →</a></div></div>
+      <div class="barbero-card"><div class="barbero-foto"><b>DT</b></div><h3>Dami Trusso</h3><p class="bio">Freestyle y diseños.</p><div class="pie"><a href="reservar.html">Reservar →</a></div></div>
+      <div class="barbero-card"><div class="barbero-foto"><b>LF</b></div><h3>Luki</h3><p class="bio">Corte prolijo sin vueltas.</p><div class="pie"><a href="reservar.html">Reservar →</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SHOWROOM ================= -->
+<section class="seccion" id="showroom" style="border-top:1px solid var(--linea)">
+  <div class="contenedor">
+    <div class="encabezado-seccion">
+      <div>
+        <span class="etiqueta">03 — Showroom</span>
+        <h2>La ropa</h2>
+      </div>
+      <p>Producción corta, se vende en el local. Consultá talle y stock por WhatsApp y te lo guardamos hasta que vengas a cortarte.</p>
+    </div>
+    <div class="grilla-tienda" id="grillaTienda"></div>
+    <div style="margin-top:44px; display:flex; gap:12px; flex-wrap:wrap">
+      <a class="btn" id="btnWhatsTienda" href="#" target="_blank" rel="noopener">Consultar stock</a>
+      <a class="btn btn--fantasma" id="btnInstaShowroom" href="#" target="_blank" rel="noopener">Ver el showroom en Instagram</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LOCAL ================= -->
+<section class="seccion" id="local" style="border-top:1px solid var(--linea)">
+  <div class="contenedor">
+    <div class="encabezado-seccion">
+      <div>
+        <span class="etiqueta">04 — El local</span>
+        <h2>Dónde y cuándo</h2>
+      </div>
+    </div>
+    <div class="grilla-info">
+      <div class="info-bloque">
+        <h3>Dirección</h3>
+        <p id="infoDireccion">Almafuerte 585, Chivilcoy (6620)</p>
+        <p style="margin-top:14px"><a class="acento" id="infoMapa" href="#" target="_blank" rel="noopener">Ver en el mapa →</a></p>
+      </div>
+      <div class="info-bloque">
+        <h3>Horarios</h3>
+        <p id="infoHorario">Martes a sábado<br>10 a 13 · 15 a 20</p>
+        <p style="margin-top:14px">Domingos y lunes cerrado.</p>
+      </div>
+      <div class="info-bloque">
+        <h3>Contacto</h3>
+        <p><a id="infoWhats" class="acento" href="#" target="_blank" rel="noopener">WhatsApp →</a></p>
+        <p style="margin-top:10px"><a id="infoInsta" class="acento" href="#" target="_blank" rel="noopener">@fallieristudio →</a></p>
+        <p style="margin-top:10px"><a id="infoInsta2" class="acento" href="#" target="_blank" rel="noopener">@fallierishowroom →</a></p>
+      </div>
+      <div class="info-bloque">
+        <h3>Cómo reservar</h3>
+        <p>Elegís barbero, servicio, día y hora. Te damos el código del turno al instante.</p>
+        <p style="margin-top:14px"><a class="acento" href="reservar.html">Reservar turno →</a></p>
+      </div>
+    </div>
+
+    <div class="faq" style="margin-top:60px">
+      <details>
+        <summary>¿Puedo cancelar el turno?</summary>
+        <p>Sí. Cuando reservás te damos un código. Con ese código y tu teléfono cancelás solo desde la web hasta 2 horas antes. Más sobre la hora, escribinos por WhatsApp.</p>
+      </details>
+      <details>
+        <summary>¿Puedo elegir a un barbero en particular?</summary>
+        <p>Siempre. Cada uno tiene su agenda, sus servicios y sus horarios. En el paso 1 elegís con quién te querés cortar.</p>
+      </details>
+      <details>
+        <summary>¿Se paga por adelantado?</summary>
+        <p>No. Reservás sin pagar y abonás en el local.</p>
+      </details>
+      <details>
+        <summary>¿Hacen color y decoloración?</summary>
+        <p>Sí, y es uno de los trabajos que más hacemos. Al ser un servicio más largo, tiene su propio horario dentro de la agenda: elegilo en el paso 2 y el sistema ya reserva el tiempo que hace falta.</p>
+      </details>
+      <details>
+        <summary>¿Venden la ropa online?</summary>
+        <p>Por ahora se vende en el local. Consultás talle y stock por WhatsApp, te lo reservamos y lo retirás cuando venís.</p>
+      </details>
+      <details>
+        <summary>Llegué tarde, ¿pierdo el turno?</summary>
+        <p>Aguantamos 10 minutos. Pasado ese tiempo el turno puede darse de baja para no atrasar al que sigue.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="pie-web">
+  <div class="contenedor">
+    <div class="filas">
+      <div>
+        <div class="logo logo-grande" style="color:var(--hueso)">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" stroke-width="2"/>
+            <text x="100" y="96" text-anchor="middle" fill="currentColor" font-family="'Instrument Serif',Georgia,serif" font-size="34" textLength="150" lengthAdjust="spacingAndGlyphs">FALLIERI&#39;S</text>
+            <path d="M44 117.5 h18 M138 117.5 h18" stroke="currentColor" stroke-width="1.2"/>
+            <text x="103" y="121" text-anchor="middle" fill="currentColor" font-family="Inter,sans-serif" font-size="10" font-weight="500" letter-spacing="5.5">STUDIO</text>
+          </svg>
+        </div>
+        <p style="color:var(--gris);max-width:32ch;margin-top:18px">Barbería y showroom.<br>Almafuerte 585, Chivilcoy.</p>
+      </div>
+      <div>
+        <div class="etiqueta" style="margin-bottom:12px">Navegación</div>
+        <p><a href="#servicios">Servicios</a></p>
+        <p><a href="#equipo">Equipo</a></p>
+        <p><a href="#showroom">Showroom</a></p>
+        <p><a href="reservar.html">Reservar</a></p>
+      </div>
+      <div>
+        <div class="etiqueta" style="margin-bottom:12px">Turnos</div>
+        <a href="reservar.html" class="btn btn--chico">Reservar turno</a>
+        <p style="margin-top:14px"><a href="reservar.html#cancelar" style="color:var(--gris)">Cancelar un turno</a></p>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© <span id="anio">2026</span> Fallieri&#39;s Studio</span>
+      <span>Hecho por <a href="#" class="acento">TD Studio</a> · <a href="admin.html" style="color:var(--gris)">Acceso staff</a></span>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-flotante" id="waFlotante" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.9-2.9-1.6-4-3.5-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
+</a>
+
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/landing.js"></script>
+</body>
+</html>
