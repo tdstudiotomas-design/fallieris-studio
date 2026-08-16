@@ -190,7 +190,7 @@ begin
     and estado = 'confirmado'
     and inicio > now();
   if v_n >= v_max_act then
-    raise exception format('Ya tenés %s turnos reservados. Cancelá uno antes de sacar otro.', v_n)
+    raise exception 'Ya tenés % turnos reservados. Cancelá uno antes de sacar otro.', v_n
       using errcode = 'P0001';
   end if;
 
@@ -280,7 +280,7 @@ begin
     return json_build_object('ok', true, 'mensaje', 'Ese turno ya estaba cancelado.');
   end if;
   if v_t.inicio < now() + make_interval(hours => v_horas) then
-    raise exception format('Faltan menos de %s h para el turno. Avisanos por WhatsApp.', v_horas)
+    raise exception 'Faltan menos de % h para el turno. Avisanos por WhatsApp.', v_horas
       using errcode = 'P0001';
   end if;
 
