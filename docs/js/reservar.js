@@ -89,8 +89,12 @@ function Barra() {
 function Pasos({ paso }) {
   return (
     <>
-      <div className="pasos">
-        {[1, 2, 3, 4].map(n => <i key={n} className={n <= paso ? 'hecho' : ''} />)}
+      <div className="pasos-punch" role="img" aria-label={`Paso ${paso} de 4`}>
+        {[1, 2, 3, 4].map(n => (
+          <span key={n} className={'punch' + (n < paso ? ' hecho' : n === paso ? ' activo' : '')}>
+            {n < paso ? '✓' : n}
+          </span>
+        ))}
       </div>
       <span className="paso-num">Paso {paso} de 4</span>
     </>
@@ -100,8 +104,12 @@ function Pasos({ paso }) {
 function Resumen({ barbero, servicio, inicio }) {
   if (!barbero) return null;
   return (
-    <div className="resumen">
-      <span className="etiqueta">Tu reserva</span>
+    <div className="ticket">
+      <div className="ticket-cabecera">
+        <span className="etiqueta">Tu reserva</span>
+        <span className="marca-mini">F</span>
+      </div>
+      <div className="ticket-perf" aria-hidden="true" />
       <div className="fila"><span>Barbero</span><b>{barbero.nombre}</b></div>
       {servicio && <div className="fila"><span>Servicio</span><b>{servicio.nombre} · {duracionTexto(servicio.duracion_min)}</b></div>}
       {servicio && <div className="fila"><span>Precio</span><b>{plata(servicio.precio)}</b></div>}
@@ -125,13 +133,13 @@ function PasoBarbero({ barberos, onElegir }) {
       <p className="bajada">Cada barbero tiene su agenda. Después elegís servicio y horario.</p>
       {barberos.length === 0 && <div className="vacio">No hay barberos disponibles en este momento.</div>}
       {barberos.map(b => (
-        <button key={b.id} className="opcion" onClick={() => onElegir(b)}>
+        <button key={b.id} className="opcion opcion--barbero" onClick={() => onElegir(b)}>
           <span className="avatar">{b.foto_url ? <img src={b.foto_url} alt="" /> : iniciales(b.nombre)}</span>
           <span className="texto">
             <b>{b.nombre}</b>
             <small>{b.bio || `Reservar con ${b.nombre.split(' ')[0]}`}</small>
           </span>
-          <span style={{ opacity: .35 }}>→</span>
+          <span className="flecha">→</span>
         </button>
       ))}
     </>
@@ -336,6 +344,7 @@ function Listo({ turno }) {
   return (
     <div className="exito">
       <div className="tilde">✓</div>
+      <span className="sello-final">Confirmado</span>
       <h2>Turno confirmado</h2>
       <p className="bajada" style={{ textTransform: 'capitalize' }}>
         {fechaLarga(turno.inicio)} · {hora(turno.inicio)}
