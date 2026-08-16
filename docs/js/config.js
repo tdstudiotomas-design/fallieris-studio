@@ -11,8 +11,8 @@
 window.CONFIG = {
   // --- Supabase -------------------------------------------------------
   // Supabase -> Project Settings -> API
-  SUPABASE_URL:  'https://TU-PROYECTO.supabase.co',
-  SUPABASE_ANON_KEY: 'TU-ANON-KEY',
+  SUPABASE_URL:  'https://ztsgopxzqzfglvyqdfxh.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2dvcHh6cXpmZ2x2eXFkZnhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MjgyMDQsImV4cCI6MjEwMjQwNDIwNH0.9wWPDrD5A8EVGtG6DjcuyEfql6Z81pl13OIvYRbHIXE',
 
   // --- Marca ----------------------------------------------------------
   MARCA: {

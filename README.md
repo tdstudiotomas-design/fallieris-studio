@@ -183,6 +183,7 @@ Está pensado para que crecer sea barato:
 | Que un barbero deje de hacer un servicio | Panel → Equipo → destildar el servicio |
 | Cambiar horarios o cargar vacaciones | Panel → Horarios |
 | Cargar o sacar ropa de la web | Panel → Tienda |
+| Cargar un cliente habitual ("VIP") | Panel → Habituales |
 | Cambiar el color de acento | `docs/css/estilos.css`, variable `--acento` |
 | Cambiar textos del local | `docs/js/config.js` → `MARCA` |
 | Cambiar cada cuántos minutos arranca un turno | tabla `config`, clave `paso_min` |
@@ -194,13 +195,70 @@ una función SQL en `supabase/03_funciones.sql` con `security definer` + un
 
 ---
 
-## 4. Próximos pasos recomendados
+## 4. Clientes habituales ("VIP") y recordatorio por WhatsApp con IA
+
+**Lo que ya está construido** (panel → pestaña **Habituales**): se carga un
+patrón por cliente — barbero, servicio, día de la semana, hora, teléfono — y
+el panel muestra, para cada uno, si esta semana ya tiene turno confirmado, si
+está "pendiente" (no se le avisó todavía) o si hay un **conflicto** (el
+barbero no atiende ese día: franco, vacaciones, cambió el horario). Esto NO
+reserva nada solo: es la lista de a quién hay que avisarle y cuándo.
+
+**Lo que falta** es el envío del mensaje y la reprogramación automática, y
+eso vive fuera de esta web, en **n8n** — mismo patrón que ya usás en Dottiplast
+y en el SaaS de gestión: n8n orquesta, Meta Cloud API manda el WhatsApp,
+Claude interpreta la respuesta, y la base de datos sigue siendo la única
+fuente de verdad (n8n se conecta con la `service_role key`, que bypassea el
+RLS, tal como en tus otros proyectos).
+
+### Requisito primero: un número de WhatsApp Business dedicado
+
+Tiene que ser un número **exclusivo del negocio**, no el celular personal de
+nadie del equipo. Meta Cloud API (la vía oficial) pide verificar un número de
+negocio aparte; automatizar un WhatsApp personal con métodos no oficiales
+hace que Meta lo detecte y lo bloquee, dejándolo inutilizable incluso para uso
+normal. Puede ser una línea nueva o una que hoy no se use.
+
+### El workflow (para armar en n8n cuando el número esté listo)
+
+1. **Cron diario** (ej. 9 AM): consulta `clientes_habituales` con `activo = true`
+   y sin `pausado_hasta` vigente, calcula la próxima fecha de cada uno (mismo
+   cálculo que hace el panel) y filtra los que caen dentro de, por ejemplo,
+   las próximas 48 h.
+2. Para cada uno, chequea contra `turnos` si ya tiene una reserva confirmada
+   para esa fecha → si ya la tiene, no le manda nada.
+3. Si no tiene, chequea `horarios` + `bloqueos` de ese barbero para esa fecha
+   (la misma lógica de "conflicto" del panel) → si el barbero no atiende, no
+   le escribe al cliente: en cambio, deja aviso para el barbero (el panel ya
+   se lo muestra solo con tener el franco cargado).
+4. Si está todo libre, **envía el WhatsApp** vía Meta Cloud API: "Hola
+   {nombre}! ¿Como todos los {día}, tu turno de las {hora} con {barbero}?"
+   con opciones rápidas (Sí / Cambiar / No esta semana).
+5. **Webhook de respuesta** → agente con Claude interpreta:
+   - Confirma → llama la función `crear_turno` (la misma que usa la web,
+     con la `anon key`: ya viene validada y segura) con ese barbero/servicio/
+     horario exacto.
+   - Quiere cambiar → el agente llama `slots_disponibles`/`dias_disponibles`
+     para ofrecer 2-3 alternativas cercanas, el cliente elige, se llama
+     `crear_turno` con el horario elegido.
+   - No quiere esta semana → no hace nada (el patrón sigue activo para la
+     semana que viene).
+
+No hace falta inventar funciones nuevas para esto: `crear_turno`,
+`slots_disponibles` y `dias_disponibles` (`supabase/03_funciones.sql`) son
+exactamente las mismas que usa `reservar.html`, y ya validan todo del lado
+del servidor. n8n las llama igual que las llama el navegador.
+
+---
+
+## 5. Próximos pasos recomendados
 
 Ordenados por lo que más impacto tiene sobre lo que menos:
 
-1. **Recordatorio por WhatsApp 24 h antes.** Es lo que más baja los ausentes.
-   Se hace con un cron de Supabase (`pg_cron`) o un n8n que consulte los turnos
-   del día siguiente y dispare los mensajes.
+1. **Recordatorio por WhatsApp 24 h antes, para TODOS los turnos** (no solo
+   habituales). Es lo que más baja los ausentes en general. Mismo mecanismo
+   que el punto 4, pero disparado por cualquier turno del día siguiente en
+   vez de por el patrón de un cliente habitual.
 2. **Email de confirmación automático.** Una Edge Function de Supabase con
    Resend, disparada por trigger al insertar el turno.
 3. **Seña para reservar.** Si hay muchos ausentes, cobrar una seña con Mercado

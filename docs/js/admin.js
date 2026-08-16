@@ -33,6 +33,21 @@ const sumarDias = (iso, dias) => {
 };
 const inicioDeDia = (iso) => new Date(iso + 'T00:00:00').toISOString();
 const finDeDia    = (iso) => new Date(sumarDias(iso, 1) + 'T00:00:00').toISOString();
+const isoDeFecha  = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// Próxima fecha (YYYY-MM-DD) en la que cae ese día de la semana, saltando
+// las que estén cubiertas por una pausa ("de vacaciones hasta el...").
+const proximaFecha = (diaSemana, pausadoHasta) => {
+  const f = new Date(); f.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 21; i++) {
+    if (f.getDay() === diaSemana) {
+      const iso = isoDeFecha(f);
+      if (!pausadoHasta || iso > pausadoHasta) return iso;
+    }
+    f.setDate(f.getDate() + 1);
+  }
+  return null;
+};
 
 const hora = (iso) => new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: CFG.ZONA }).format(new Date(iso));
 const fechaCorta = (iso) => new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', timeZone: CFG.ZONA }).format(new Date(iso));
@@ -735,6 +750,251 @@ function Horarios({ perfil, barberos }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* HABITUALES ("VIP") · clientes que vienen siempre el mismo día y hora */
+/* No reserva nada solo: es el patrón que un workflow externo (n8n) usa */
+/* para mandar el recordatorio por WhatsApp. Acá solo se carga y se ve  */
+/* quién "toca" esta semana.                                            */
+/* ------------------------------------------------------------------ */
+function Habituales({ perfil, barberos, servicios, catalogo }) {
+  const propio = perfil.rol === 'barbero' ? perfil.barbero_id : '';
+  const [lista, setLista] = useState(null);
+  const [horarios, setHorarios] = useState([]);
+  const [bloqueos, setBloqueos] = useState([]);
+  const [turnos, setTurnos] = useState([]);
+  const [barberoId, setBarberoId] = useState('');
+  const [abrirAlta, setAbrirAlta] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [error, setError] = useState('');
+
+  const cargar = useCallback(async () => {
+    setError('');
+    const desde = hoyISO(), hasta = sumarDias(hoyISO(), 21);
+    let qh = sb.from('clientes_habituales').select('*').order('dia_semana').order('hora');
+    if (barberoId) qh = qh.eq('barbero_id', barberoId);
+    const [h, hor, bl, tu] = await Promise.all([
+      qh,
+      sb.from('horarios').select('barbero_id,dia_semana,hora_inicio,hora_fin,activo'),
+      sb.from('bloqueos').select('barbero_id,inicio,fin').gte('fin', inicioDeDia(desde)).lte('inicio', finDeDia(hasta)),
+      sb.from('turnos').select('barbero_id,cliente_telefono,inicio,estado')
+        .gte('inicio', inicioDeDia(desde)).lte('inicio', finDeDia(hasta)).neq('estado', 'cancelado')
+    ]);
+    if (h.error) { setError(err(h.error)); setLista([]); return; }
+    setLista(h.data || []);
+    setHorarios(hor.data || []);
+    setBloqueos(bl.data || []);
+    setTurnos(tu.data || []);
+  }, [barberoId]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  function duracionDe(row) {
+    const c = catalogo.find(x => x.barbero_id === row.barbero_id && x.servicio_id === row.servicio_id);
+    const s = servicios.find(x => x.id === row.servicio_id);
+    return (c && c.duracion_min) || (s && s.duracion_min) || 30;
+  }
+
+  function estadoDe(row) {
+    if (!row.activo) return { texto: 'Pausado', tipo: 'pausado', fecha: null };
+    const fecha = proximaFecha(row.dia_semana, row.pausado_hasta);
+    if (!fecha) return { texto: 'Sin próxima fecha', tipo: 'pausado', fecha: null };
+
+    const inicio = new Date(`${fecha}T${row.hora}:00`);
+    const fin = new Date(inicio.getTime() + duracionDe(row) * 60000);
+
+    const yaConfirmado = turnos.some(t =>
+      t.barbero_id === row.barbero_id &&
+      t.cliente_telefono === row.cliente_telefono &&
+      isoDeFecha(new Date(t.inicio)) === fecha);
+    if (yaConfirmado) return { texto: 'Ya tiene turno esta semana', tipo: 'ok', fecha };
+
+    const horarioActivo = horarios.some(h =>
+      h.barbero_id === row.barbero_id && h.dia_semana === row.dia_semana && h.activo &&
+      row.hora >= h.hora_inicio.slice(0, 5) && row.hora < h.hora_fin.slice(0, 5));
+    const bloqueado = bloqueos.some(b =>
+      (b.barbero_id === row.barbero_id || !b.barbero_id) &&
+      new Date(b.inicio) < fin && new Date(b.fin) > inicio);
+
+    if (!horarioActivo || bloqueado) {
+      return { texto: 'Sin turno esta semana — el barbero no atiende ese día/horario', tipo: 'conflicto', fecha };
+    }
+    return { texto: 'Pendiente de confirmar', tipo: 'pendiente', fecha };
+  }
+
+  async function alternarActivo(row) {
+    await sb.from('clientes_habituales').update({ activo: !row.activo }).eq('id', row.id);
+    cargar();
+  }
+  async function borrar(id) {
+    if (!confirm('¿Borrar este cliente habitual?')) return;
+    await sb.from('clientes_habituales').delete().eq('id', id);
+    cargar();
+  }
+
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h2>Habituales</h2>
+          <p style={{ color: 'var(--gris)' }}>
+            Clientes que vienen siempre el mismo día. Esto no reserva nada solo:
+            avisa cuándo le toca a cada uno y si hay algún problema con su horario habitual.
+          </p>
+        </div>
+        <button className="btn btn--chico" onClick={() => { setEditando(null); setAbrirAlta(v => !v); }}>
+          {abrirAlta ? 'Cerrar' : '+ Nuevo cliente habitual'}
+        </button>
+      </div>
+
+      {perfil.rol === 'admin' && (
+        <div className="filtros" style={{ marginTop: 20 }}>
+          <Campo label="Barbero">
+            <select value={barberoId} onChange={e => setBarberoId(e.target.value)}>
+              <option value="">Todos</option>
+              {barberos.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+            </select>
+          </Campo>
+        </div>
+      )}
+
+      {(abrirAlta || editando) && (
+        <FormaHabitual
+          perfil={perfil} barberos={barberos} servicios={servicios} catalogo={catalogo}
+          propio={propio} editando={editando}
+          onListo={() => { setAbrirAlta(false); setEditando(null); cargar(); }}
+          onCancelar={() => { setAbrirAlta(false); setEditando(null); }}
+        />
+      )}
+
+      <Aviso>{error}</Aviso>
+      {lista === null && <span className="cargando" />}
+      {lista && lista.length === 0 && <Vacio>Todavía no cargaste clientes habituales.</Vacio>}
+      {lista && lista.length > 0 && (
+        <div className="tabla-envoltorio" style={{ marginTop: 20 }}>
+          <table className="tabla">
+            <thead>
+              <tr><th>Cliente</th><th>Barbero</th><th>Servicio</th><th>Día y hora</th><th>Esta semana</th><th></th></tr>
+            </thead>
+            <tbody>
+              {lista.map(row => {
+                const b = barberos.find(x => x.id === row.barbero_id);
+                const s = servicios.find(x => x.id === row.servicio_id);
+                const est = estadoDe(row);
+                return (
+                  <tr key={row.id} style={{ opacity: row.activo ? 1 : .5 }}>
+                    <td>
+                      <b>{row.cliente_nombre}</b>
+                      <div className="mini">
+                        <a href={`https://wa.me/${row.cliente_telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener">{row.cliente_telefono}</a>
+                      </div>
+                      {row.notas && <div className="mini">“{row.notas}”</div>}
+                    </td>
+                    <td>{b ? b.nombre : '—'}</td>
+                    <td>{s ? s.nombre : '—'}</td>
+                    <td>{DIAS[row.dia_semana]} · {row.hora}</td>
+                    <td>
+                      <span className={'pill ' + (est.tipo === 'ok' ? 'atendido' : est.tipo === 'conflicto' ? 'ausente' : est.tipo === 'pausado' ? 'cancelado' : 'confirmado')}>
+                        {est.tipo === 'ok' ? 'Confirmado' : est.tipo === 'conflicto' ? 'Conflicto' : est.tipo === 'pausado' ? 'Pausado' : 'Pendiente'}
+                      </span>
+                      <div className="mini" style={{ marginTop: 4 }}>{est.texto}{est.fecha ? ` (${fechaCorta(est.fecha + 'T12:00:00')})` : ''}</div>
+                    </td>
+                    <td>
+                      <div className="acciones-fila">
+                        <button className="icono-btn" onClick={() => { setAbrirAlta(false); setEditando(row); }}>Editar</button>
+                        <button className="icono-btn" onClick={() => alternarActivo(row)}>{row.activo ? 'Pausar' : 'Activar'}</button>
+                        <button className="icono-btn peligro" onClick={() => borrar(row.id)}>Borrar</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+function FormaHabitual({ perfil, barberos, servicios, catalogo, propio, editando, onListo, onCancelar }) {
+  const [f, setF] = useState(editando ? {
+    barbero_id: editando.barbero_id, servicio_id: editando.servicio_id,
+    cliente_nombre: editando.cliente_nombre, cliente_telefono: editando.cliente_telefono,
+    dia_semana: editando.dia_semana, hora: editando.hora, activo: editando.activo,
+    pausado_hasta: editando.pausado_hasta || '', notas: editando.notas || ''
+  } : {
+    barbero_id: propio || (barberos[0] ? barberos[0].id : ''),
+    servicio_id: '', cliente_nombre: '', cliente_telefono: '', activo: true,
+    dia_semana: 5, hora: '18:00', pausado_hasta: '', notas: ''
+  });
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const disponibles = useMemo(() => catalogo
+    .filter(c => c.barbero_id === f.barbero_id && c.servicios)
+    .map(c => ({ id: c.servicio_id, nombre: c.servicios.nombre })), [catalogo, f.barbero_id]);
+
+  useEffect(() => {
+    if (disponibles.length && !disponibles.find(s => s.id === f.servicio_id)) {
+      setF(v => ({ ...v, servicio_id: disponibles[0].id }));
+    }
+  }, [disponibles]);
+
+  async function guardar(e) {
+    e.preventDefault();
+    setError(''); setGuardando(true);
+    if (!f.servicio_id) { setError('Elegí un servicio.'); setGuardando(false); return; }
+    const datos = {
+      barbero_id: f.barbero_id, servicio_id: f.servicio_id,
+      cliente_nombre: f.cliente_nombre, cliente_telefono: f.cliente_telefono,
+      dia_semana: Number(f.dia_semana), hora: f.hora, activo: !!f.activo,
+      pausado_hasta: f.pausado_hasta || null, notas: f.notas || null
+    };
+    const { error } = editando
+      ? await sb.from('clientes_habituales').update(datos).eq('id', editando.id)
+      : await sb.from('clientes_habituales').insert(datos);
+    setGuardando(false);
+    if (error) { setError(err(error)); return; }
+    onListo();
+  }
+
+  return (
+    <form className="caja" onSubmit={guardar} style={{ marginTop: 20 }}>
+      <h3>{editando ? 'Editar cliente habitual' : 'Nuevo cliente habitual'}</h3>
+      <Aviso>{error}</Aviso>
+      <div className="fila-form">
+        {perfil.rol === 'admin' && (
+          <Campo label="Barbero">
+            <select value={f.barbero_id} onChange={set('barbero_id')}>
+              {barberos.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+            </select>
+          </Campo>
+        )}
+        <Campo label="Servicio">
+          <select value={f.servicio_id} onChange={set('servicio_id')}>
+            {disponibles.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+          </select>
+        </Campo>
+        <Campo label="Cliente"><input value={f.cliente_nombre} onChange={set('cliente_nombre')} required /></Campo>
+        <Campo label="Teléfono"><input value={f.cliente_telefono} onChange={set('cliente_telefono')} placeholder="+549..." required /></Campo>
+        <Campo label="Día">
+          <select value={f.dia_semana} onChange={set('dia_semana')}>
+            {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+          </select>
+        </Campo>
+        <Campo label="Hora"><input type="time" value={f.hora} onChange={set('hora')} required /></Campo>
+        <Campo label="Pausado hasta (opcional)"><input type="date" value={f.pausado_hasta} onChange={set('pausado_hasta')} /></Campo>
+        <Campo label="Notas"><input value={f.notas} onChange={set('notas')} placeholder="Ej: prefiere fade bajo" /></Campo>
+      </div>
+      <div className="acciones-fila">
+        <button className="btn btn--chico" disabled={guardando}>{guardando ? <span className="cargando" /> : 'Guardar'}</button>
+        <button type="button" className="btn btn--fantasma btn--chico" onClick={onCancelar}>Cancelar</button>
+      </div>
+    </form>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* EQUIPO (solo admin)                                                 */
 /* ------------------------------------------------------------------ */
 function Equipo({ barberos, servicios, catalogo, recargar }) {
@@ -1088,8 +1348,8 @@ function Panel({ sesion, perfil }) {
   useEffect(() => { recargar(); }, [recargar]);
 
   const tabs = perfil.rol === 'admin'
-    ? [['agenda', 'Agenda'], ['turnos', 'Turnos'], ['stats', 'Estadísticas'], ['horarios', 'Horarios'], ['equipo', 'Equipo'], ['servicios', 'Servicios'], ['tienda', 'Tienda']]
-    : [['agenda', 'Mi agenda'], ['turnos', 'Mis turnos'], ['stats', 'Mis números'], ['horarios', 'Mi horario']];
+    ? [['agenda', 'Agenda'], ['turnos', 'Turnos'], ['stats', 'Estadísticas'], ['horarios', 'Horarios'], ['habituales', 'Habituales'], ['equipo', 'Equipo'], ['servicios', 'Servicios'], ['tienda', 'Tienda']]
+    : [['agenda', 'Mi agenda'], ['turnos', 'Mis turnos'], ['stats', 'Mis números'], ['horarios', 'Mi horario'], ['habituales', 'Mis habituales']];
 
   return (
     <>
@@ -1123,6 +1383,7 @@ function Panel({ sesion, perfil }) {
         {tab === 'turnos'    && <Turnos perfil={perfil} barberos={barberos} servicios={servicios} catalogo={catalogo} />}
         {tab === 'stats'     && <Estadisticas perfil={perfil} />}
         {tab === 'horarios'  && <Horarios perfil={perfil} barberos={barberos} />}
+        {tab === 'habituales' && <Habituales perfil={perfil} barberos={barberos} servicios={servicios} catalogo={catalogo} />}
         {tab === 'equipo'    && <Equipo barberos={barberos} servicios={servicios} catalogo={catalogo} recargar={recargar} />}
         {tab === 'servicios' && <Servicios servicios={servicios} recargar={recargar} />}
         {tab === 'tienda'    && <Tienda />}

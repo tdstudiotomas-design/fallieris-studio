@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  var LLAVE = 'fallieris_demo_v2';
+  var LLAVE = 'fallieris_demo_v3';
   var PASO_MIN = 30;
   var ANTICIPACION_HS = 2;
 
@@ -74,6 +74,12 @@
       HORARIOS.push({ id: b.id + '-' + d + '-b', barbero_id: b.id, dia_semana: d, hora_inicio: '15:00:00', hora_fin: '20:00:00', activo: true });
     });
   });
+
+  // Clientes habituales ("VIP"): mismo criterio que supabase/04_seed.sql
+  var CLIENTES_HABITUALES = [
+    { id: 'ch1', barbero_id: 'b3', servicio_id: 's2', cliente_nombre: 'Franco Giménez', cliente_telefono: '+542346611001', dia_semana: 5, hora: '18:00', activo: true, pausado_hasta: null, notas: 'Viene todos los viernes, siempre el mismo horario.' },
+    { id: 'ch2', barbero_id: 'b1', servicio_id: 's1', cliente_nombre: 'Matías Pereyra', cliente_telefono: '+542346611002', dia_semana: 6, hora: '11:00', activo: true, pausado_hasta: null, notas: null }
+  ];
 
   var NOMBRES = ['Franco Giménez','Matías Pereyra','Iván Rodríguez','Thiago Almada','Nicolás Suárez',
                  'Lautaro Benítez','Joaquín Ramos','Bruno Vera','Santino Ledesma','Gonzalo Ferreyra',
@@ -131,7 +137,8 @@
     DB = {
       barberos: BARBEROS, servicios: SERVICIOS, barbero_servicios: CATALOGO,
       horarios: HORARIOS, productos: PRODUCTOS, turnos: generarTurnos(),
-      bloqueos: [], perfiles: [{ user_id: 'u1', rol: 'admin', barbero_id: null }]
+      bloqueos: [], perfiles: [{ user_id: 'u1', rol: 'admin', barbero_id: null }],
+      clientes_habituales: copiar(CLIENTES_HABITUALES)
     };
     guardar();
   }
@@ -376,6 +383,7 @@
       neq: function (c, v) { st.filtros.push(function (f) { return f[c] !== v; }); return api; },
       gte: function (c, v) { st.filtros.push(function (f) { return f[c] >= v; }); return api; },
       lt:  function (c, v) { st.filtros.push(function (f) { return f[c] < v; }); return api; },
+      lte: function (c, v) { st.filtros.push(function (f) { return f[c] <= v; }); return api; },
       order: function (c, o) { st.orden.push([c, (o && o.ascending === false) ? -1 : 1]); return api; },
       limit: function (n) { st.limite = n; return api; },
       maybeSingle: function () { st.single = true; return api; },

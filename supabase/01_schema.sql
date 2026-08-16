@@ -74,6 +74,30 @@ create table if not exists public.horarios (
 create index if not exists horarios_barbero_dia_idx on public.horarios (barbero_id, dia_semana);
 
 -- ---------------------------------------------------------------------
+-- CLIENTES HABITUALES ("VIP"): el que viene siempre el mismo día y hora.
+-- Esto NO reserva nada solo. Es el patrón que usa el panel para avisar
+-- "a fulano le toca esta semana" y que un workflow externo (n8n) puede
+-- leer para mandarle un WhatsApp de confirmación unos días antes.
+-- La reserva real sigue pasando siempre por crear_turno().
+-- ---------------------------------------------------------------------
+create table if not exists public.clientes_habituales (
+  id               uuid primary key default gen_random_uuid(),
+  barbero_id       uuid not null references public.barberos(id)  on delete cascade,
+  servicio_id      uuid not null references public.servicios(id) on delete cascade,
+  cliente_nombre   text not null check (length(cliente_nombre) between 2 and 60),
+  cliente_telefono text not null,
+  dia_semana       smallint not null check (dia_semana between 0 and 6),
+  hora             time not null,
+  activo           boolean not null default true,
+  -- Para pausar sin borrar el patrón (vacaciones del cliente, etc.)
+  pausado_hasta    date,
+  notas            text,
+  creado_en        timestamptz not null default now()
+);
+create index if not exists clientes_habituales_barbero_idx on public.clientes_habituales (barbero_id, dia_semana);
+create index if not exists clientes_habituales_tel_idx     on public.clientes_habituales (cliente_telefono);
+
+-- ---------------------------------------------------------------------
 -- BLOQUEOS: vacaciones, francos, feriados, cortes de luz, etc.
 -- barbero_id NULL = bloquea a TODO el local
 -- ---------------------------------------------------------------------

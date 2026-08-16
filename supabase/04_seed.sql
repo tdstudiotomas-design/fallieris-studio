@@ -95,6 +95,15 @@ delete from public.horarios
 where barbero_id = '11111111-1111-4111-8111-000000000005' and dia_semana = 2;
 
 -- ---------------------------------------------------------------------
+-- CLIENTES HABITUALES ("VIP") · ejemplo, borrar y cargar los reales
+-- desde el panel (pestaña "Habituales").
+-- ---------------------------------------------------------------------
+insert into public.clientes_habituales (id, barbero_id, servicio_id, cliente_nombre, cliente_telefono, dia_semana, hora, notas) values
+  ('77777777-7777-4777-8777-000000000001','11111111-1111-4111-8111-000000000003','55555555-5555-4555-8555-000000000002','Franco Giménez','+542346611001', 5, '18:00', 'Viene todos los viernes, siempre el mismo horario.'),
+  ('77777777-7777-4777-8777-000000000002','11111111-1111-4111-8111-000000000001','55555555-5555-4555-8555-000000000001','Matías Pereyra','+542346611002', 6, '11:00', null)
+on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------
 -- SHOWROOM (ropa) · lo que se vende en el local, @fallierishowroom
 -- ---------------------------------------------------------------------
 insert into public.productos (id, nombre, descripcion, precio, categoria, talles, stock, destacado, orden) values

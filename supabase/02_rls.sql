@@ -56,6 +56,7 @@ alter table public.turnos            enable row level security;
 alter table public.productos         enable row level security;
 alter table public.perfiles          enable row level security;
 alter table public.intentos_reserva  enable row level security;
+alter table public.clientes_habituales enable row level security;
 
 -- Nadie llega a intentos_reserva salvo las funciones internas.
 -- (RLS activado y sin ninguna policy = acceso denegado a todos.)
@@ -80,13 +81,15 @@ grant select (id, nombre, apodo, bio, foto_url, instagram, activo, orden)
 grant select, insert, update, delete on
   public.barberos, public.servicios, public.barbero_servicios,
   public.horarios, public.bloqueos, public.turnos, public.productos,
-  public.config
+  public.config, public.clientes_habituales
   to authenticated;
 grant select on public.perfiles to authenticated;
 
--- turnos y bloqueos: el rol anónimo no los toca NUNCA
-revoke all on public.turnos   from anon;
-revoke all on public.bloqueos from anon;
+-- turnos, bloqueos y clientes_habituales tienen nombre/teléfono de
+-- clientes: el rol anónimo no los toca NUNCA.
+revoke all on public.turnos              from anon;
+revoke all on public.bloqueos            from anon;
+revoke all on public.clientes_habituales from anon;
 
 -- =====================================================================
 -- 3) Políticas
@@ -165,6 +168,24 @@ create policy bloqueos_propio on public.bloqueos
   using (barbero_id = public.mi_barbero_id())
   with check (barbero_id = public.mi_barbero_id());
 create policy bloqueos_admin on public.bloqueos
+  for all to authenticated using (public.es_admin()) with check (public.es_admin());
+
+-- ---------- clientes_habituales ("VIP") ----------
+-- Tiene nombre y teléfono de clientes: mismo criterio que turnos, NO el
+-- de horarios/bloqueos. Un barbero ve solo sus propios clientes, no los
+-- de sus compañeros. Ninguna policy para 'anon'.
+drop policy if exists habituales_staff  on public.clientes_habituales;
+drop policy if exists habituales_lectura on public.clientes_habituales;
+drop policy if exists habituales_propio on public.clientes_habituales;
+drop policy if exists habituales_admin  on public.clientes_habituales;
+create policy habituales_lectura on public.clientes_habituales
+  for select to authenticated
+  using (public.es_admin() or barbero_id = public.mi_barbero_id());
+create policy habituales_propio on public.clientes_habituales
+  for all to authenticated
+  using (barbero_id = public.mi_barbero_id())
+  with check (barbero_id = public.mi_barbero_id());
+create policy habituales_admin on public.clientes_habituales
   for all to authenticated using (public.es_admin()) with check (public.es_admin());
 
 -- ---------- turnos ----------
