@@ -171,8 +171,8 @@ p  { margin: 0 0 1rem; }
    HERO
    --------------------------------------------------------------------- */
 .hero {
-  min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end;
-  padding-top: calc(var(--nav) + 40px); padding-bottom: 52px; position: relative; overflow: hidden;
+  min-height: 100svh; display: flex; flex-direction: column;
+  padding-top: calc(var(--nav) + 56px); padding-bottom: 52px; position: relative; overflow: hidden;
 }
 .hero::after {
   content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -180,11 +180,16 @@ p  { margin: 0 0 1rem; }
     radial-gradient(900px 520px at 78% 8%, rgba(242,240,235,.055), transparent 62%),
     radial-gradient(700px 500px at 0% 100%, rgba(242,240,235,.03), transparent 60%);
 }
-.hero .contenedor { position: relative; z-index: 1; width: 100%; }
-.hero h1 { margin: 10px 0 8px; }
-.hero h1 em { color: var(--acento); }
-.hero-pie { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px; margin-top: clamp(32px, 6vw, 72px); }
-.hero-pie p { max-width: 36ch; font-size: 1.05rem; color: rgba(242,240,235,.62); margin: 0; }
+/* El titular arranca arriba, el CTA queda anclado abajo: el vacío del medio
+   es lo que le da el aire "editorial" en vez de un bloque apretado. */
+.hero .contenedor { position: relative; z-index: 1; width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.hero h1 {
+  margin: 14px 0 0; text-transform: uppercase; font-size: clamp(3.6rem, 12.5vw, 9.8rem);
+  letter-spacing: -.01em;
+}
+.hero h1 em { color: var(--acento); font-style: italic; }
+.hero-pie { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px; margin-top: clamp(48px, 10vw, 120px); }
+.hero-pie p { max-width: 34ch; font-size: 1rem; font-style: italic; color: rgba(242,240,235,.55); margin: 0; }
 .hero-datos { text-align: right; }
 @media (max-width: 700px) { .hero-datos { text-align: left; } }
 
