@@ -1,0 +1,166 @@
+{
+  "name": "Fallieri's · Recordatorio clientes habituales",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 9 * * *" }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "Todos los días 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-1200, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fecha de hoy y el límite de la ventana que vamos a consultar (8 días).\n// Todo en la zona horaria del local para no desfasar el día.\nconst tz = 'America/Argentina/Buenos_Aires';\nconst fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });\nconst hoy = new Date();\nconst limite = new Date(hoy.getTime() + 8 * 86400000);\nreturn [{ json: { hoy: fmt.format(hoy), limite: fmt.format(limite) } }];"
+      },
+      "id": "code-fechas",
+      "name": "Fechas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-980, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clientes_habituales?select=*,barberos(nombre),servicios(nombre,duracion_min)&activo=eq.true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-habituales",
+      "name": "Traer habituales",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-760, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/horarios?select=barbero_id,dia_semana,hora_inicio,hora_fin,activo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-horarios",
+      "name": "Traer horarios",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-540, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/bloqueos?select=barbero_id,inicio,fin&fin=gte.{{ $('Fechas').item.json.hoy }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-bloqueos",
+      "name": "Traer bloqueos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-320, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/turnos?select=barbero_id,cliente_telefono,inicio,estado&inicio=gte.{{ $('Fechas').item.json.hoy }}&inicio=lt.{{ $('Fechas').item.json.limite }}&estado=neq.cancelado",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-turnos",
+      "name": "Traer turnos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-100, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Misma lógica que la pestaña \"Habituales\" del panel (docs/js/admin.js),\n// pero acá decide a quién hay que escribirle HOY por WhatsApp:\n// el que le toca en exactamente 2 días, sin turno todavía y sin conflicto.\nconst DIAS_AVISO = 2;\n\nconst habituales = $('Traer habituales').all().map(i => i.json);\nconst horarios   = $('Traer horarios').all().map(i => i.json);\nconst bloqueos   = $('Traer bloqueos').all().map(i => i.json);\nconst turnos     = $('Traer turnos').all().map(i => i.json);\n\nconst DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\n\nfunction isoDeFecha(d) {\n  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');\n}\nfunction proximaFecha(diaSemana, pausadoHasta) {\n  const f = new Date(); f.setHours(0,0,0,0);\n  for (let i = 0; i < 21; i++) {\n    if (f.getDay() === diaSemana) {\n      const iso = isoDeFecha(f);\n      if (!pausadoHasta || iso > pausadoHasta) return iso;\n    }\n    f.setDate(f.getDate() + 1);\n  }\n  return null;\n}\n\nconst hoy = new Date(); hoy.setHours(0,0,0,0);\nconst candidatos = [];\n\nfor (const row of habituales) {\n  const fecha = proximaFecha(row.dia_semana, row.pausado_hasta);\n  if (!fecha) continue;\n\n  const objetivo = new Date(hoy.getTime() + DIAS_AVISO * 86400000);\n  if (fecha !== isoDeFecha(objetivo)) continue; // no es el día de avisarle todavía\n\n  const dur = (row.servicios && row.servicios.duracion_min) || 30;\n  const inicio = new Date(`${fecha}T${row.hora}:00`);\n  const fin = new Date(inicio.getTime() + dur * 60000);\n\n  const yaConfirmado = turnos.some(t =>\n    t.barbero_id === row.barbero_id &&\n    t.cliente_telefono === row.cliente_telefono &&\n    t.inicio.slice(0, 10) === fecha);\n  if (yaConfirmado) continue;\n\n  const horarioActivo = horarios.some(h =>\n    h.barbero_id === row.barbero_id && h.dia_semana === row.dia_semana && h.activo &&\n    row.hora >= h.hora_inicio.slice(0,5) && row.hora < h.hora_fin.slice(0,5));\n  const bloqueado = bloqueos.some(b =>\n    (b.barbero_id === row.barbero_id || !b.barbero_id) &&\n    new Date(b.inicio) < fin && new Date(b.fin) > inicio);\n  if (!horarioActivo || bloqueado) continue; // conflicto: el panel ya se lo avisa al barbero, no le escribimos al cliente\n\n  candidatos.push({\n    json: {\n      barbero_id: row.barbero_id,\n      servicio_id: row.servicio_id,\n      barbero: row.barberos ? row.barberos.nombre : '',\n      servicio: row.servicios ? row.servicios.nombre : '',\n      cliente_nombre: row.cliente_nombre,\n      cliente_telefono: row.cliente_telefono.replace(/\\D/g, ''),\n      dia: DIAS[row.dia_semana],\n      hora: row.hora,\n      fecha,\n      inicio_iso: inicio.toISOString()\n    }\n  });\n}\nreturn candidatos;"
+      },
+      "id": "code-procesar",
+      "name": "Quién toca avisar hoy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 0]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-batches",
+      "name": "Uno por uno",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [340, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $env.META_PHONE_NUMBER_ID }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.META_WHATSAPP_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  messaging_product: 'whatsapp',\n  to: $json.cliente_telefono,\n  type: 'interactive',\n  interactive: {\n    type: 'button',\n    body: { text: `Hola ${$json.cliente_nombre}! Como todos los ${$json.dia}, ¿confirmamos tu turno de las ${$json.hora} con ${$json.barbero}?` },\n    action: {\n      buttons: [\n        { type: 'reply', reply: { id: 'confirmar_' + $json.fecha, title: 'Sí, va' } },\n        { type: 'reply', reply: { id: 'cambiar_' + $json.fecha, title: 'Cambiar horario' } },\n        { type: 'reply', reply: { id: 'no_' + $json.fecha, title: 'Esta semana no' } }\n      ]\n    }\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "http-enviar",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [560, -100]
+    }
+  ],
+  "connections": {
+    "Todos los días 9 AM": { "main": [[{ "node": "Fechas", "type": "main", "index": 0 }]] },
+    "Fechas": { "main": [[{ "node": "Traer habituales", "type": "main", "index": 0 }]] },
+    "Traer habituales": { "main": [[{ "node": "Traer horarios", "type": "main", "index": 0 }]] },
+    "Traer horarios": { "main": [[{ "node": "Traer bloqueos", "type": "main", "index": 0 }]] },
+    "Traer bloqueos": { "main": [[{ "node": "Traer turnos", "type": "main", "index": 0 }]] },
+    "Traer turnos": { "main": [[{ "node": "Quién toca avisar hoy", "type": "main", "index": 0 }]] },
+    "Quién toca avisar hoy": { "main": [[{ "node": "Uno por uno", "type": "main", "index": 0 }]] },
+    "Uno por uno": {
+      "main": [
+        [],
+        [{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar WhatsApp": { "main": [[{ "node": "Uno por uno", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
