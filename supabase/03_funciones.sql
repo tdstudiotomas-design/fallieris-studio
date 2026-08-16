@@ -17,7 +17,7 @@
 create or replace function public.cfg(p_clave text, p_default text default null)
 returns text
 language sql stable
-security definer set search_path = public, pg_temp
+security definer set search_path = public, extensions, pg_temp
 as $$
   select coalesce((select valor from public.config where clave = p_clave), p_default);
 $$;
@@ -32,7 +32,7 @@ create or replace function public.slots_disponibles(
 )
 returns table (inicio timestamptz)
 language plpgsql stable
-security definer set search_path = public, pg_temp
+security definer set search_path = public, extensions, pg_temp
 as $$
 declare
   v_tz       text := public.cfg('zona_horaria', 'America/Argentina/Buenos_Aires');
@@ -108,7 +108,7 @@ create or replace function public.dias_disponibles(
 )
 returns table (fecha date, cupos int)
 language plpgsql stable
-security definer set search_path = public, pg_temp
+security definer set search_path = public, extensions, pg_temp
 as $$
 declare
   v_tz    text := public.cfg('zona_horaria', 'America/Argentina/Buenos_Aires');
@@ -138,7 +138,7 @@ create or replace function public.crear_turno(
 )
 returns json
 language plpgsql
-security definer set search_path = public, pg_temp
+security definer set search_path = public, extensions, pg_temp
 as $$
 declare
   v_tz        text := public.cfg('zona_horaria', 'America/Argentina/Buenos_Aires');
@@ -260,7 +260,7 @@ create or replace function public.cancelar_turno(
 )
 returns json
 language plpgsql
-security definer set search_path = public, pg_temp
+security definer set search_path = public, extensions, pg_temp
 as $$
 declare
   v_horas int := coalesce(nullif(public.cfg('cancelacion_min_horas'), '')::int, 2);
@@ -306,7 +306,7 @@ returns table (
   ingresos   numeric
 )
 language plpgsql stable
-security definer set search_path = public, pg_temp
+security definer set search_path = public, extensions, pg_temp
 as $$
 declare
   v_tz  text := public.cfg('zona_horaria', 'America/Argentina/Buenos_Aires');

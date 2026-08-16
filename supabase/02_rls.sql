@@ -25,7 +25,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
   select exists (
     select 1 from public.perfiles p
@@ -38,7 +38,7 @@ returns uuid
 language sql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
   select p.barbero_id from public.perfiles p where p.user_id = auth.uid();
 $$;
