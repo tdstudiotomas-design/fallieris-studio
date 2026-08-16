@@ -97,11 +97,12 @@
   // ------------------------------------------------------------------
   function pintarEquipo(barberos) {
     if (!barberos || !barberos.length) return;
-    $('#grillaEquipo').innerHTML = barberos.map(function (b) {
+    $('#grillaEquipo').innerHTML = barberos.map(function (b, i) {
       var foto = b.foto_url
         ? '<img src="' + esc(b.foto_url) + '" alt="' + esc(b.nombre) + '" loading="lazy">'
         : '<b>' + esc(iniciales(b.nombre)) + '</b>';
       return '<div class="barbero-card">' +
+        '<span class="num-tag">' + String(i + 1).padStart(2, '0') + '</span>' +
         '<div class="barbero-foto">' + foto + '</div>' +
         '<h3>' + esc(b.nombre) + '</h3>' +
         '<p class="bio">' + esc(b.bio || '') + '</p>' +
