@@ -189,64 +189,70 @@ p  { margin: 0 0 1rem; }
 @media (max-width: 700px) { .hero-datos { text-align: left; } }
 
 /* Cinta corrediza */
-.cinta { border-block: 1px solid var(--linea); overflow: hidden; padding: 16px 0; background: var(--humo); }
-.cinta-pista { display: flex; gap: 44px; width: max-content; animation: correr 38s linear infinite; }
-.cinta span { font-family: var(--display); font-size: 1.5rem; letter-spacing: .01em; color: rgba(242,240,235,.42); white-space: nowrap; }
-.cinta span:nth-child(even) { color: rgba(242,240,235,.16); }
+.cinta { border-top: 3px solid var(--acento); border-bottom: 3px solid var(--acento); overflow: hidden; padding: 20px 0; background: var(--humo); }
+.cinta-pista { display: flex; gap: 52px; width: max-content; animation: correr 38s linear infinite; }
+.cinta span { font-family: var(--display); font-size: 1.55rem; letter-spacing: .02em; color: rgba(242,240,235,.5); white-space: nowrap; font-weight: 500; }
+.cinta span:nth-child(even) { color: rgba(242,240,235,.25); opacity: .8; }
 @keyframes correr { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .cinta-pista { animation: none; } }
 
 /* ---------------------------------------------------------------------
    SERVICIOS (lista tipo carta)
    --------------------------------------------------------------------- */
-.lista-servicios { border-top: 1px solid var(--linea-clara); }
+.lista-servicios { border-top: 2px solid var(--acento); }
 .servicio {
-  display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; align-items: baseline;
-  padding: 28px 0; border-bottom: 1px solid var(--linea-clara);
-  transition: padding-left .25s ease;
+  display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; align-items: baseline;
+  padding: 28px 20px; border-bottom: 2px solid var(--linea-clara); margin: 0 -20px;
+  transition: all .25s ease; position: relative;
 }
-.servicio:hover { padding-left: 14px; }
-.servicio h3 { grid-column: 1; }
-.servicio .precio { grid-column: 2; font-family: var(--display); font-size: clamp(1.3rem,2.4vw,1.9rem); white-space: nowrap; }
-.servicio p { grid-column: 1 / -1; margin: 0; color: rgba(11,11,12,.55); font-size: .92rem; }
-.servicio .duracion { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(11,11,12,.42); }
+.servicio::before { content: ''; position: absolute; left: 0; top: 0; width: 3px; height: 100%; background: var(--acento); opacity: 0; transition: opacity .25s ease; }
+.servicio:hover { padding-left: 24px; }
+.servicio:hover::before { opacity: 1; }
+.servicio h3 { grid-column: 1; font-weight: 600; }
+.servicio .precio { grid-column: 2; font-family: var(--display); font-size: clamp(1.35rem,2.5vw,2rem); white-space: nowrap; font-weight: 600; }
+.servicio p { grid-column: 1 / -1; margin: 0; color: rgba(11,11,12,.55); font-size: .94rem; }
+.servicio .duracion { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(11,11,12,.45); font-weight: 600; }
 
 /* ---------------------------------------------------------------------
    EQUIPO
    --------------------------------------------------------------------- */
-.grilla-equipo { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); }
-.barbero-card { background: var(--tinta); padding: 26px 24px 24px; display: flex; flex-direction: column; gap: 14px; transition: background .25s ease; }
+.grilla-equipo { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 3px; background: var(--acento); border: 2px solid var(--acento); }
+.barbero-card { background: var(--tinta); padding: 26px 24px 24px; display: flex; flex-direction: column; gap: 14px; transition: all .25s ease; position: relative; }
 .barbero-card:hover { background: var(--humo); }
+.barbero-card::after { content: ''; position: absolute; top: 0; right: 0; width: 0; height: 0; border-style: solid; border-width: 0 28px 28px 0; border-color: transparent var(--acento) transparent transparent; opacity: 0; transition: opacity .25s ease; }
+.barbero-card:hover::after { opacity: 1; }
 .barbero-foto {
-  aspect-ratio: 3/4; background: linear-gradient(160deg, #191919, #0d0d0e); border: 1px solid var(--linea);
+  aspect-ratio: 3/4; background: linear-gradient(160deg, #191919, #0d0d0e); border: 2px solid var(--linea);
   display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
 }
 .barbero-foto img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); transition: filter .4s ease, transform .5s ease; }
 .barbero-card:hover .barbero-foto img { filter: grayscale(0); transform: scale(1.04); }
 .barbero-foto b { font-family: var(--display); font-size: 3.6rem; font-weight: 400; color: rgba(242,240,235,.16); }
-.barbero-card h3 { font-size: 1.5rem; }
+.barbero-card h3 { font-size: 1.55rem; font-weight: 600; }
 .barbero-card .bio { font-size: .86rem; color: var(--gris); margin: 0; flex: 1; }
-.barbero-card .pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.barbero-card .pie a { font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--hueso); font-weight: 600; }
+.barbero-card .pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid rgba(242,240,235,.12); }
+.barbero-card .pie a { font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--hueso); font-weight: 700; }
 .barbero-card .pie a:hover { color: var(--acento); }
 .barbero-card .insta { color: var(--gris) !important; font-weight: 400 !important; letter-spacing: .04em !important; text-transform: none !important; }
 
 /* ---------------------------------------------------------------------
    SHOWROOM
    --------------------------------------------------------------------- */
-.grilla-tienda { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 26px; }
-.producto { display: flex; flex-direction: column; gap: 10px; }
+.grilla-tienda { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 28px; }
+.producto { display: flex; flex-direction: column; gap: 12px; }
 .producto-img {
-  aspect-ratio: 1; background: var(--humo); border: 1px solid var(--linea);
+  aspect-ratio: 1; background: var(--humo); border: 2px solid var(--linea);
   display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
+  transition: border-color .25s ease;
 }
+.producto:hover .producto-img { border-color: var(--acento); }
 .producto-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
 .producto:hover .producto-img img { transform: scale(1.05); }
 .producto-img b { font-family: var(--display); font-weight: 400; font-size: 1.35rem; color: rgba(242,240,235,.2); text-align: center; padding: 14px; }
-.producto .tag { position: absolute; top: 10px; left: 10px; background: var(--hueso); color: var(--tinta); font-size: .58rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; padding: 4px 9px; }
-.producto h3 { font-size: 1.15rem; }
+.producto .tag { position: absolute; top: 0; left: 0; background: var(--acento); color: var(--tinta); font-size: .58rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; }
+.producto h3 { font-size: 1.18rem; font-weight: 600; }
 .producto .fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.producto .precio { font-family: var(--display); font-size: 1.25rem; }
+.producto .precio { font-family: var(--display); font-size: 1.3rem; font-weight: 600; }
 .producto .talles { font-size: .68rem; letter-spacing: .12em; color: var(--gris); text-transform: uppercase; }
 
 /* ---------------------------------------------------------------------
